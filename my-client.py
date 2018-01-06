@@ -1,3 +1,4 @@
+import math
 import threading
 
 from airmash import packets
@@ -27,7 +28,7 @@ class ClientUpdate(StoppableThread):
         distance = 1e6
         closest = None
         for player in client.players.values():
-            if player == me:
+            if player == me or not player.online:
                 continue
             d = me.dist_from(player)
             if d < distance:
@@ -38,28 +39,49 @@ class ClientUpdate(StoppableThread):
 
     def run(self):
 
-        FULL_TURN = 1.5
+        full_turn = 1.5
+        half_turn = full_turn / 2.0
+
+        self.wait(1)
+
+        # respawn as mohawk
+        mohawk = str(ship_types['Mohawk'])
+        packet = packets.build_player_command('COMMAND', com='respawn', data=mohawk)
+        client.send(packet)
 
         while not self.wait():
             if not client.connected:
                 continue
 
-            # respawn as mohawk
-            mohawk = str(ship_types['Mohawk'])
-            packet = packets.build_player_command('COMMAND', com='respawn', data=mohawk)
-            client.send(packet)
-
             me = client.player
 
             closest, distance = self._closest_player()
             if distance < 800:
-                print(f'closest: {closest} ({distance})')
 
-            self.wait(2)
+                angle_to_closest = me.angle_to(closest)
+                print(f'closest:{closest} ({distance})')
+                difference = angle_to_closest - me.rotation
+                wait = difference / (2 * math.pi) * full_turn
+                print(f'angle:{angle_to_closest:.2f} me:{me.rotation:.2f}')
+                print(f'difference:{difference:.2f} wait:{wait:.2f}')
 
-            # client.key('LEFT', True)
-            # self.wait(FULL_TURN)
-            # client.key('LEFT', False)
+                direction = 'RIGHT'
+                if wait < 0:
+                    direction = 'LEFT'
+                    wait = -wait
+                elif wait > half_turn:
+                    direction = 'LEFT'
+                    wait = full_turn - wait
+
+                print(f'new wait:{wait:.2f} ({direction})')
+                print()
+
+                client.key(direction, True)
+                self.wait(wait)
+                client.key(direction, False)
+
+                client.key('FIRE', True)
+                client.key('FIRE', False)
 
 
 def track_position(player, key, old, new):
