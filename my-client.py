@@ -1,6 +1,8 @@
 import threading
 
+from airmash import packets
 from airmash.client import Client
+from airmash.types import ship_types
 
 
 class StoppableThread(threading.Thread):
@@ -11,7 +13,7 @@ class StoppableThread(threading.Thread):
     def stop(self):
         self._event.set()
 
-    def wait(self, timeout=1):
+    def wait(self, timeout=1.0):
         return self._event.wait(timeout=timeout)
 
 
@@ -19,10 +21,21 @@ class ClientUpdate(StoppableThread):
     def __init__(self, *args, **kwargs):
         StoppableThread.__init__(self, *args, **kwargs)
 
+
     def run(self):
+        FULL_TURN = 1.5
         while not self.wait():
             if client.connected:
+                mohawk = str(ship_types['Mohawk'])
+                packet = packets.build_player_command('COMMAND', com='respawn', data=mohawk)
+                client.send(packet)
+                self.wait(2)
+
                 client.key('LEFT', True)
+                self.wait(FULL_TURN)
+                client.key('LEFT', False)
+
+
 
 
 def track_position(player, key, old, new):
