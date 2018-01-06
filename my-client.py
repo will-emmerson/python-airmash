@@ -19,23 +19,47 @@ class StoppableThread(threading.Thread):
 
 class ClientUpdate(StoppableThread):
     def __init__(self, *args, **kwargs):
-        StoppableThread.__init__(self, *args, **kwargs)
+        super(ClientUpdate, self).__init__(*args, **kwargs)
 
+    def _closest_player(self):
+        # closest = sorted(client.players.values(), key=lambda p:p.dist_from(me))[0]
+        me = client.player
+        distance = 1e6
+        closest = None
+        for player in client.players.values():
+            if player == me:
+                continue
+            d = me.dist_from(player)
+            if d < distance:
+                distance = d
+                closest = player
+
+        return closest, distance
 
     def run(self):
+
         FULL_TURN = 1.5
+
         while not self.wait():
-            if client.connected:
-                mohawk = str(ship_types['Mohawk'])
-                packet = packets.build_player_command('COMMAND', com='respawn', data=mohawk)
-                client.send(packet)
-                self.wait(2)
+            if not client.connected:
+                continue
 
-                client.key('LEFT', True)
-                self.wait(FULL_TURN)
-                client.key('LEFT', False)
+            # respawn as mohawk
+            mohawk = str(ship_types['Mohawk'])
+            packet = packets.build_player_command('COMMAND', com='respawn', data=mohawk)
+            client.send(packet)
 
+            me = client.player
 
+            closest, distance = self._closest_player()
+            if distance < 800:
+                print(f'closest: {closest} ({distance})')
+
+            self.wait(2)
+
+            # client.key('LEFT', True)
+            # self.wait(FULL_TURN)
+            # client.key('LEFT', False)
 
 
 def track_position(player, key, old, new):
