@@ -19,6 +19,9 @@ class StoppableThread(threading.Thread):
 
 
 class ClientUpdate(StoppableThread):
+
+    full_turn = 1.5
+
     def __init__(self, *args, **kwargs):
         super(ClientUpdate, self).__init__(*args, **kwargs)
 
@@ -37,11 +40,50 @@ class ClientUpdate(StoppableThread):
 
         return closest, distance
 
-    def run(self):
-
-        full_turn = 1.5
+    def _shoot_closest_player(self):
+        full_turn = self.full_turn
         half_turn = full_turn / 2.0
+        me = client.player
 
+        closest, distance = self._closest_player()
+        if distance < 800:
+
+            angle_to_closest = me.angle_to(closest)
+            print(f'closest:{closest} ({distance})')
+            difference = angle_to_closest - me.rotation
+            wait = difference / (2 * math.pi) * full_turn
+            print(f'angle:{angle_to_closest:.2f} me:{me.rotation:.2f}')
+            print(f'difference:{difference:.2f} wait:{wait:.2f}')
+
+            direction = 'RIGHT'
+            if wait < 0:
+                direction = 'LEFT'
+                wait = -wait
+            elif wait > half_turn:
+                direction = 'LEFT'
+                wait = full_turn - wait
+
+            print(f'new wait:{wait:.2f} ({direction})')
+            print()
+
+            client.key(direction, True)
+            self.wait(wait)
+            client.key(direction, False)
+
+            client.key('FIRE', True)
+            client.key('FIRE', False)
+
+    def _evade(self):
+        me = client.player
+        cutoff = 500
+        for p in client.projectiles.values():
+            # if p.owner == me or not p.online or me.dist_from(p) > cutoff:
+            #     continue
+            print(f'rot:{p.rotation:.1f} owner:{p.owner} distance:{me.dist_from(p):.1f} x:{p.posX} y:{p.posY}')
+
+
+
+    def run(self):
         self.wait(1)
 
         # respawn as mohawk
@@ -54,34 +96,18 @@ class ClientUpdate(StoppableThread):
                 continue
 
             me = client.player
+            client.key('FIRE', True)
+            client.key('FIRE', False)
+            self.wait(0.2)
+            p = list(filter(lambda x: x.owner == me, client.projectiles.values()))[0]
+            print(f'projectile:{p.posX},{p.posY}')
 
-            closest, distance = self._closest_player()
-            if distance < 800:
+            break
+            # self._evade()
+            # self.wait(1)
+            # self._shoot_closest_player()
 
-                angle_to_closest = me.angle_to(closest)
-                print(f'closest:{closest} ({distance})')
-                difference = angle_to_closest - me.rotation
-                wait = difference / (2 * math.pi) * full_turn
-                print(f'angle:{angle_to_closest:.2f} me:{me.rotation:.2f}')
-                print(f'difference:{difference:.2f} wait:{wait:.2f}')
 
-                direction = 'RIGHT'
-                if wait < 0:
-                    direction = 'LEFT'
-                    wait = -wait
-                elif wait > half_turn:
-                    direction = 'LEFT'
-                    wait = full_turn - wait
-
-                print(f'new wait:{wait:.2f} ({direction})')
-                print()
-
-                client.key(direction, True)
-                self.wait(wait)
-                client.key(direction, False)
-
-                client.key('FIRE', True)
-                client.key('FIRE', False)
 
 
 def track_position(player, key, old, new):

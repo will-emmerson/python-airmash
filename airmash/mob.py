@@ -1,3 +1,6 @@
+import math
+
+
 class Mob():
     def __init__(self, id, owner, data={}):
         self.online = True
@@ -51,3 +54,10 @@ class Mob():
 
     def on_change(self, key, handler):
         self._handlers[key] = handler
+
+    @property
+    def rotation(self):
+        ang = math.atan2(-self.speedX, self.speedY)
+        if ang < 0:
+            ang += math.pi * 2
+        return ang

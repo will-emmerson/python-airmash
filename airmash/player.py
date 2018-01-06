@@ -16,7 +16,7 @@ class Player():
         #self._handlers['keystate'] = ks
 
     def __str__(self):
-        return f'{self.name} ({self.posX}, {self.posY})'
+        return f'{self.name} ({self.posX:.1f}, {self.posY:.1f})'
 
     def update(self, data):
         old = self.__dict__.copy()
