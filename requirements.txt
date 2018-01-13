@@ -1,2 +1,4 @@
 construct
 websocket-client
+reloadr
+wsaccel # faster ws

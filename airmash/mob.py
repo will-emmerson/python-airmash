@@ -10,6 +10,10 @@ class Mob():
         self._handlers = {}
         self.update(data)
 
+    def __str__(self):
+        owner = self.owner.name if self.owner else 'Unknown'
+        return f'MISSILE {owner} ({self.posX:.1f}, {self.posY:.1f}) {self.rotation}'
+
     def despawn(self):
         self.active = False
         self._handle_change('despawn', True, False)
@@ -57,7 +61,19 @@ class Mob():
 
     @property
     def rotation(self):
-        ang = math.atan2(-self.speedX, self.speedY)
+        ang = math.atan2(self.speedX, -self.speedY)
+        if ang < 0:
+            ang += math.pi * 2
+        return ang
+
+    def angle_to(self, other):
+        """
+  Hairy. On the world map, straight up is the Y axis, and is also direction 0. In the standard
+  interpretation of the atan2 function, angles are measured from the X axis. Thus, atan2(x,y)
+  is used here rather than the more expected y,x order of arguments.
+  The values for x and y are from self, so we subtract the values of other from self.
+        """
+        ang = math.atan2((-self.posX + other.posX), (self.posY - other.posY))
         if ang < 0:
             ang += math.pi * 2
         return ang
