@@ -8,7 +8,7 @@ class Player():
     current_clock = 0
 
     def __init__(self, id, data={}):
-        self.online = True
+        self.active = True
         self.id = id
         self._handlers = {}
         self.update(data)

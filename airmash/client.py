@@ -217,7 +217,7 @@ class Client:
 
         if message.command == 'PLAYER_LEAVE':
             self._debug_print(packets.DEBUG_ACTION, u"{} left".format(self.players[message.id].name))
-            self.players[message.id].online = False
+            self.players[message.id].active = False
             return self._call_handler(message)
 
         if message.command == 'PLAYER_NEW':

@@ -4,10 +4,9 @@ class Mob():
     def __init__(self, id, owner, data={}, clock=0):
         self.clock = clock
         Mob.current_clock = clock
-        self.online = True
+        self.active = True
         self.id = id
         self.owner = owner
-        self.active = True
         self._handlers = {}
         self.update(data)
 

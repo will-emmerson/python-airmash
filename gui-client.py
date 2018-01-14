@@ -64,7 +64,7 @@ while not client.connected:
 
 def draw(items, colour, size=player_size):
     for item in items:
-        if not item.online:
+        if not item.active:
             continue
         x = item.posX - me.posX + (width / 2.0)
         y = item.posY - me.posY + (height / 2.0)
