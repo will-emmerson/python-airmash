@@ -1,3 +1,4 @@
+import os
 import sys
 from threading import Thread
 from time import sleep
@@ -16,6 +17,11 @@ def on_hit(client, message):
             print("Uh oh! I've been hit!")
 
 
+@client.on(['MOB_DESPAWN', 'MOB_DESPAWN_COORDS', 'MOB_UPDATE', 'MOB_UPDATE_STATIONARY'])
+def md(client, message):
+    print(message)
+
+
 kwargs = dict(
     name='z',
     flag='GB',
@@ -27,15 +33,17 @@ kwargs = dict(
 t = Thread(target=client.connect, kwargs=kwargs)
 t.start()
 
-
-size = width, height = 1000, 800
+size = width, height = 900, 1000
 black = 0, 0, 0
 white = 255, 255, 255
 red = 255, 0, 0
 green = 0, 255, 0
 blue = 0, 0, 255
-player_size = 50
 
+player_size = 50
+projectile_size = 20
+
+os.environ['SDL_VIDEO_WINDOW_POS'] = "0,20"
 pygame.init()
 font = pygame.font.SysFont('', 20)
 clock = pygame.time.Clock()
@@ -52,6 +60,19 @@ keys = {
 
 while not client.connected:
     sleep(0.1)
+
+
+def draw(items, colour, size=player_size):
+    for item in items:
+        if not item.online:
+            continue
+        x = item.posX - me.posX + (width / 2.0)
+        y = item.posY - me.posY + (height / 2.0)
+        if 0 < x < width and 0 < y < height:
+            pygame.draw.rect(screen, colour, (x, y, size, size))
+            textsurface = font.render(str(item), True, white)
+            screen.blit(textsurface, (x, y))
+
 
 while 1:
 
@@ -72,28 +93,9 @@ while 1:
     screen.fill(black)
 
     me = client.player
-    for player in list(client.players.values()):
-        if not player.online:
-            continue
-        x = player.posX - me.posX + (width / 2.0)
-        y = player.posY - me.posY + (height / 2.0)
-        if 0 < x < width and 0 < y < height:
-            colour = blue if player == me else green
-            pygame.draw.rect(screen, colour, (x, y, player_size, player_size))
-            textsurface = font.render(player.name, False, white)
-            screen.blit(textsurface, (x, y))
-
-    for projectile in list(client.projectiles.values()):
-        if not projectile.online:
-            continue
-        x = projectile.posX - me.posX + (width / 2.0)
-        y = projectile.posY - me.posY + (height / 2.0)
-        if 0 < x < width and 0 < y < height:
-            pygame.draw.rect(screen, red, (x, y, 20, 20))
-            label = f'{projectile.speedX:.1f} {projectile.accelX:.1f}'
-            # print(label)
-            textsurface = font.render(label, False, white)
-            screen.blit(textsurface, (x, y))
+    draw([me], blue)
+    draw(client.players.values(), green)
+    draw(client.projectiles.values(), red, size=20)
 
     pygame.display.flip()
     clock.tick(30)

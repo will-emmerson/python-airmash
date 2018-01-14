@@ -4,6 +4,9 @@ def ks(player, k, a, b):
     print("[{}] {}: {}".format(player.name, k, a))
 
 class Player():
+
+    start_time = None
+
     def __init__(self, id, data={}):
         self.online = True
         self.id = id
@@ -14,6 +17,12 @@ class Player():
 
         #self._handlers['upgrades'] = ks
         #self._handlers['keystate'] = ks
+    @property
+    def age(self):
+        return (self.clock - Player.start_time) / 1e6
+
+    def __str__(self):
+        return f'{self.name} id:{self.id} clock:{self.age:.1f} pos:({self.posX:.1f}, {self.posY:.1f})'
 
     def update(self, data):
         old = self.__dict__.copy()

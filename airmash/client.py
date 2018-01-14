@@ -20,7 +20,9 @@ class Client:
 
     def on(self, key, handler=None):
         def decorate(handler):
-            self._handlers[key] = handler
+            keys = [key] if isinstance(key, str) else key
+            for k in keys:
+                self._handlers[k] = handler
 
         if handler is None:
             return decorate
@@ -116,6 +118,10 @@ class Client:
             self.send(cmd)
 
             self.connected = True
+
+            Mob.start_time = message.clock
+            Player.start_time = message.clock
+
             return self._call_handler(message)
 
         if message.command == 'SERVER_MESSAGE':
@@ -176,7 +182,8 @@ class Client:
             if message.command == 'PLAYER_FIRE':
                 for projectile in message.projectiles:
                     self._debug_print(packets.DEBUG_ACTION, u"New projectile of type {}".format(projectile.type))
-                    self.projectiles[projectile.id] = Mob(projectile.id, self.players[message.id], projectile)
+                    self.projectiles[projectile.id] = Mob(
+                        projectile.id, self.players[message.id], projectile, clock=message.clock)
                 return self._call_handler(message)
 
             if message.command == 'EVENT_STEALTH':
@@ -193,9 +200,11 @@ class Client:
                     self._debug_print(packets.DEBUG_ACTION, u"{} uses repel. {} self.players and {} self.projectiles repelled.".format(self.players[message.id].name, len(message.players), len(message.mobs)))
                     for projectile in message.mobs:
                         if projectile.id in self.projectiles:
-                            self.projectiles[projectile.id].update(projectile, new_owner=self.players[message.id])
+                            self.projectiles[projectile.id].update(
+                                projectile, new_owner=self.players[message.id], clock=message.clock)
                         else:
-                            self.projectiles[projectile.id] = Mob(projectile.id, self.players[message.id], projectile)
+                            self.projectiles[projectile.id] = Mob(
+                                projectile.id, self.players[message.id], projectile, clock=message.clock)
                 return self._call_handler(message)
 
             return self._call_handler(message)
@@ -242,7 +251,7 @@ class Client:
                 self.projectiles[message.id].update(message)
             else:
                 self._debug_print(packets.DEBUG_INFO, u"Mob type of {} does not exist? {}".format(message.type, message.id))
-                self.projectiles[message.id] = Mob(message.id, None, message)
+                self.projectiles[message.id] = Mob(message.id, None, message, clock=message.clock)
             return self._call_handler(message)
 
         if message.command in ['MOB_DESPAWN', 'MOB_DESPAWN_COORDS']:
