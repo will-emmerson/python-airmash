@@ -5,7 +5,7 @@ def ks(player, k, a, b):
 
 class Player():
 
-    start_time = None
+    current_clock = 0
 
     def __init__(self, id, data={}):
         self.online = True
@@ -19,15 +19,16 @@ class Player():
         #self._handlers['keystate'] = ks
     @property
     def age(self):
-        return (self.clock - Player.start_time) / 1e6
+        return (Player.current_clock - self.clock) / 1e6
 
     def __str__(self):
-        return f'{self.name} id:{self.id} clock:{self.age:.1f} pos:({self.posX:.1f}, {self.posY:.1f})'
+        return f'{self.name} id:{self.id} age:{self.age:.1f} pos:({self.posX:.1f}, {self.posY:.1f})'
 
     def update(self, data):
         old = self.__dict__.copy()
         
         self.clock = self._get_default(data, 'clock', 0)
+        Player.current_clock = self.clock
         self.status = self._get_default(data, 'status', 0)
         self.level = self._get_default(data, 'level', 0)
         self.name = self._get_default(data, 'name', "")

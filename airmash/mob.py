@@ -1,8 +1,9 @@
 class Mob():
-    start_time = None
+    current_clock = 0
 
     def __init__(self, id, owner, data={}, clock=0):
         self.clock = clock
+        Mob.current_clock = clock
         self.online = True
         self.id = id
         self.owner = owner
@@ -12,11 +13,11 @@ class Mob():
 
     @property
     def age(self):
-        return (self.clock - Mob.start_time) / 1e6
+        return (Mob.current_clock - self.clock) / 1e6
 
     def __str__(self):
         owner = self.owner.name if self.owner else 'Unknown'
-        return f'id:{self.id} clock:{self.age:.1f} pos:({self.posX:.1f}, {self.posY:.1f})'
+        return f'id:{self.id} age:{self.age:.1f} pos:({self.posX:.1f}, {self.posY:.1f})'
 
     def despawn(self):
         self.active = False
@@ -32,6 +33,7 @@ class Mob():
         old = self.__dict__.copy()
 
         self.clock = self._get_default(data, 'clock', 0)
+        Mob.current_clock = self.clock
         self.type = self._get_default(data, 'type', 0)
         self.posX = self._get_default(data, 'posX', 0)
         self.posY = self._get_default(data, 'posY', 0)
