@@ -119,7 +119,7 @@ class Client:
 
             self.connected = True
 
-            Mob.start_time = message.clock
+            Mob.current_clock = message.clock
             Player.current_clock = message.clock
 
             return self._call_handler(message)
